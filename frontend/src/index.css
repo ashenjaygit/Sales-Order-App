@@ -1,8 +1,10 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body {
   margin: 0;
-  background-color: #f3f4f6; /* Tailwind bg-gray-100 */
+  background-color: #f3f4f6; /* bg-gray-100 */
 }
 
 input, select {

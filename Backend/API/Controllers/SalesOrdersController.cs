@@ -1,6 +1,8 @@
-using Application.DTOs;
 using Application.Interfaces;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using API.Models;
+using Domain.Entities;
 
 namespace API.Controllers;
 
@@ -9,16 +11,19 @@ namespace API.Controllers;
 public class SalesOrdersController : ControllerBase
 {
     private readonly ISalesOrderService _salesOrderService;
+    private readonly IMapper _mapper;
 
-    public SalesOrdersController(ISalesOrderService salesOrderService)
+    public SalesOrdersController(ISalesOrderService salesOrderService, IMapper mapper)
     {
         _salesOrderService = salesOrderService;
+        _mapper = mapper;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        return Ok(await _salesOrderService.GetAllOrdersAsync());
+        var orders = await _salesOrderService.GetAllOrdersAsync();
+        return Ok(_mapper.Map<List<SalesOrderDto>>(orders));
     }
 
     [HttpGet("{id}")]
@@ -26,21 +31,24 @@ public class SalesOrdersController : ControllerBase
     {
         var order = await _salesOrderService.GetOrderByIdAsync(id);
         if (order == null) return NotFound();
-        return Ok(order);
+        return Ok(_mapper.Map<SalesOrderDto>(order));
     }
 
     [HttpPost]
     public async Task<IActionResult> Create(SalesOrderDto orderDto)
     {
-        var createdOrder = await _salesOrderService.CreateOrderAsync(orderDto);
-        return CreatedAtAction(nameof(GetById), new { id = createdOrder.Id }, createdOrder);
+        var entity = _mapper.Map<SalesOrder>(orderDto);
+        var createdOrder = await _salesOrderService.CreateOrderAsync(entity);
+        return CreatedAtAction(nameof(GetById), new { id = createdOrder.Id }, _mapper.Map<SalesOrderDto>(createdOrder));
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, SalesOrderDto orderDto)
     {
-        var updatedOrder = await _salesOrderService.UpdateOrderAsync(id, orderDto);
+        orderDto.Id = id;
+        var entity = _mapper.Map<SalesOrder>(orderDto);
+        var updatedOrder = await _salesOrderService.UpdateOrderAsync(id, entity);
         if (updatedOrder == null) return NotFound();
-        return Ok(updatedOrder);
+        return Ok(_mapper.Map<SalesOrderDto>(updatedOrder));
     }
 }

@@ -1,6 +1,9 @@
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Application.Mapping;
+using API.Mapping;
+using Application.Interfaces;
+using Application.Services;
+using Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,14 +12,22 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure DB Context with SQLite
+// Configure DB Context with SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=salesorder.db"));
+    options.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=SalesOrderDb;Trusted_Connection=True;MultipleActiveResultSets=true"));
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
-// Register Services`r`nbuilder.Services.AddScoped<Application.Interfaces.IReferenceDataService, Infrastructure.Services.ReferenceDataService>();`r`nbuilder.Services.AddScoped<Application.Interfaces.ISalesOrderService, Infrastructure.Services.SalesOrderService>();`r`n`r`n// Add CORS policy for React Frontend
+// Register Repositories
+builder.Services.AddScoped<IReferenceDataRepository, ReferenceDataRepository>();
+builder.Services.AddScoped<ISalesOrderRepository, SalesOrderRepository>();
+
+// Register Services
+builder.Services.AddScoped<IReferenceDataService, ReferenceDataService>();
+builder.Services.AddScoped<ISalesOrderService, SalesOrderService>();
+
+// Add CORS policy for React Frontend
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
@@ -34,7 +45,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated(); // Simplified strategy for test
+    db.Database.EnsureCreated(); // Or db.Database.Migrate();
 }
 
 if (app.Environment.IsDevelopment())
